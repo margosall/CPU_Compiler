@@ -1,0 +1,29 @@
+//Set and add
+SETR	REGA	0x3		;
+SETR	REGB	0x4		;
+ADD		REGC			;
+MOVR	REGA	REGC	;
+ADD		REGC			;
+
+//Set and sub
+SETR	REGA	0x3		;
+SETR	REGB	0x1		;
+SUB		REGC			;
+MOVR	REGA	REGC	;
+SUB		REGC			;
+
+//ROR
+SETR	REGA	0x2		;
+ROR		REGA	REGA	;
+ROL		REGB	REGA	;
+OR		REGC			;
+
+//Save to RAM, define to ram
+.def inputA 0x10 0x1 ;
+.def inputB 0x11 0x2 ;
+SETR REGM 0x10   ;
+LOAD REGA     ;
+SETR REGM 0x11   ;
+LOAD REGB     ;
+ADD REGC ;
+SAVECI ;

@@ -16,6 +16,10 @@ def IntConvert(integerIn):
         return int(integerIn,2)
     else:
         return int(integerIn)
+def SetMachineCode(addr,value):
+    if(len(machineCode)<(addr+1)):
+        machineCode.extend([0]*(addr-len(machineCode)+1))
+    machineCode[addr]=value
 
 #READFILE
 with open("program.asm", 'r') as programInput:
@@ -24,36 +28,68 @@ with open("program.asm", 'r') as programInput:
 #COMPILE TO MACHINECODE
 for line in code:
     lineIndex+=1
-    print(line.split())
-    operation = line.split()[0]
+    # print(line.split())
+    operation=""
+    if(len(line.split())>0):
+        operation = line.split()[0]
 
     if operation == ".def":
         varName, addr,value = line.split()[1:4]
-        print(line.split()[1:])
+        # print(line.split()[1:])
         addr = IntConvert(addr)
         value = IntConvert(value)
         variables[varName]=addr
-        if(len(machineCode)<addr):
-            print(len(machineCode),addr)
-            machineCode.extend([0]*addr)
-        machineCode[addr]=value
-    elif (operation in OPCODES):
+        SetMachineCode(addr,value)
+    elif ((operation in OPCODES1) or (operation in OPCODES2)):
         dest, value = line.split()[1:3]
         if(dest in DESTINATIONS):
-            machineCode[machineCodeIndex]= OPCODES[operation]|DESTINATIONS[dest]
-            machineCodeIndex+=1
-            if(value!=';'):
-                machineCode[machineCodeIndex]=IntConvert(value)
+            if(operation in OPCODES1):
+                SetMachineCode(machineCodeIndex,OPCODES1[operation]|DESTINATIONS[dest])
                 machineCodeIndex+=1
+                if(value!=';'):
+                    SetMachineCode(machineCodeIndex,IntConvert(value))
+                    machineCodeIndex+=1
+            elif(operation in OPCODES2):
+                if(operation == "MOVR"):
+                    SetMachineCode(machineCodeIndex,SOURCES_MOVR[value]|DESTINATIONS[dest])
+                    machineCodeIndex+=1
+                else:
+                    if(value=="REGA"):
+                        SetMachineCode(machineCodeIndex,OPCODES2[operation] | 0x00 | DESTINATIONS[dest])
+                        machineCodeIndex+=1
+                    elif(value=="REGB"):
+                        SetMachineCode(machineCodeIndex,OPCODES2[operation] | 0x08 | DESTINATIONS[dest])
+                        machineCodeIndex+=1
+    elif(operation in SPECIAL_OPCODES):
+        SetMachineCode(machineCodeIndex,SPECIAL_OPCODES[operation])
+        machineCodeIndex+=1
+    elif(operation in OPCODES_DIRECT):
+        SetMachineCode(machineCodeIndex,OPCODES_DIRECT[operation])
+        machineCodeIndex+=1
+        SetMachineCode(machineCodeIndex,IntConvert(line.split()[1]))
+        machineCodeIndex+=1
+print(hex(machineCodeIndex))
+
+
+
+
+
+
+
+
 
 #PRINT TO FILE
-print(len(machineCode))
+# print(len(machineCode))
 with open("program.txt","w") as machineOutput:
     machineOutput.write(HEADER+"\n")
     machineCodeLine = ""
     for i in range(len(machineCode)):
-        machineCodeLine+=hex(machineCode[i])[2:]+" "
-        if((i%7==0 and i!=0) or (i==len(machineCode)-1)):
+        if((i%8==0 and i!=0) or (i==len(machineCode)-1)):
             machineOutput.write(machineCodeLine[:-1]+"\n")
             machineCodeLine=""
-printHex(machineCode)
+            machineCodeLine+=hex(machineCode[i])[2:]+" "
+        else:
+            machineCodeLine+=hex(machineCode[i])[2:]+" "
+
+
+# printHex(machineCode)
